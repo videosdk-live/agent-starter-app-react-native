@@ -41,8 +41,13 @@ export const BottomBar = ({ startTime, onEndCall }) => {
 
   const { publish } = usePubSub("CHAT");
   const { getCameras, getAudioDeviceList } = useMediaDevice();
-  const { audioPermission, videoPermission, micDecline, camDecline } =
-    useMediaPermissions();
+  const {
+    audioPermission,
+    videoPermission,
+    micDecline,
+    camDecline,
+    requestPermission,
+  } = useMediaPermissions();
 
   const [chatOpen, setChatOpen] = useState(false);
   const [chatText, setChatText] = useState("");
@@ -146,7 +151,13 @@ export const BottomBar = ({ startTime, onEndCall }) => {
           <BarButton
             Icon={micOn ? Mic : MicOff}
             isOff={!micOn}
-            onPress={() => toggleMic()}
+            onPress={async () => {
+              if (!audioPermission) {
+                const ok = await requestPermission("mic");
+                if (!ok) return;
+              }
+              toggleMic();
+            }}
             showSpeakerIndicator
             isSpeaking={isLocalSpeaker}
             showPermissionWarning={micDecline}
@@ -157,7 +168,13 @@ export const BottomBar = ({ startTime, onEndCall }) => {
           <BarButton
             Icon={camOn ? Video : VideoOff}
             isOff={!camOn}
-            onPress={() => toggleWebcam()}
+            onPress={async () => {
+              if (!videoPermission) {
+                const ok = await requestPermission("cam");
+                if (!ok) return;
+              }
+              toggleWebcam();
+            }}
             showChevron
             isMenuOpen={camSheetOpen}
             onChevronPress={() => {

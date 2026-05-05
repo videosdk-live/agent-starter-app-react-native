@@ -10,6 +10,7 @@ import { MeetingScreen } from "./src/screens/MeetingScreen";
 import { createMeeting, dispatchAgent, verifyMeeting } from "./src/Api";
 import BaseModal from "./src/components/BaseModal";
 import CapacityModal from "./src/components/CapacityModal";
+import { useMediaPermissions } from "./src/hooks/useMediaPermissions";
 
 export default function App() {
   const [status, setStatus] = useState("idle");
@@ -18,6 +19,7 @@ export default function App() {
   const [showAgentLeftModal, setShowAgentLeftModal] = useState(false);
 
   const AUTH_TOKEN = Config.AUTH_TOKEN;
+  const { requestPermission } = useMediaPermissions();
 
   useEffect(() => {
     if (status !== "disconnected") return;
@@ -28,6 +30,9 @@ export default function App() {
   const handleTalkPress = useCallback(async () => {
     setStatus("connecting");
     try {
+      const micGranted = await requestPermission("mic");
+      if (!micGranted) throw new Error("Microphone permission denied");
+
       let id = Config.MEETING_ID;
       if (id) {
         const ok = await verifyMeeting(id);
@@ -46,7 +51,7 @@ export default function App() {
       console.warn("Talk to agent failed:", e?.message || e);
       setStatus("disconnected");
     }
-  }, []);
+  }, [requestPermission]);
 
   const handleLeave = useCallback(() => {
     setMeetingId(null);

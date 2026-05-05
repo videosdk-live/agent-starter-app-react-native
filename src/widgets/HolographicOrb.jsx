@@ -8,7 +8,7 @@ export const HolographicOrb = ({ isConnecting = false }) => {
     <View className="w-[260px] h-[260px] items-center justify-center">
       <FastImage
         source={sampleGif}
-        className="w-[260px] h-[260px]"
+        style={{ width: 260, height: 260 }}
         resizeMode={FastImage.resizeMode.contain}
       />
 
