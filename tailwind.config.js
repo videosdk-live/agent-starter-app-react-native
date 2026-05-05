@@ -1,0 +1,98 @@
+module.exports = {
+  content: ["./App.{js,jsx}", "./src/**/*.{js,jsx}"],
+  presets: [require("nativewind/preset")],
+  theme: {
+    extend: {
+      colors: {
+        "fl-bg": "#000000",
+        "fl-bar": "#1C1C1E",
+        "fl-sheet": "#1C1C1E",
+        "fl-tile": "#1B1B1E",
+        "fl-divider": "rgba(255,255,255,0.07)",
+
+        "pill-speaking-dot": "#38BDF8",
+        "pill-speaking-bg": "rgba(14,165,233,0.08)",
+        "pill-speaking-border": "rgba(14,165,233,0.6)",
+        "pill-speaking-text": "#7DD3FC",
+
+        "pill-thinking-dot": "#A78BFA",
+        "pill-thinking-bg": "rgba(124,58,237,0.08)",
+        "pill-thinking-border": "rgba(124,58,237,0.6)",
+        "pill-thinking-text": "#C4B5FD",
+
+        "pill-listening-dot": "#9CA3AF",
+        "pill-listening-bg": "transparent",
+        "pill-listening-border": "rgba(107,114,128,0.5)",
+        "pill-listening-text": "#9CA3AF",
+
+        "pill-idle-dot": "#E1E2EA",
+        "pill-idle-bg": "rgba(225,226,234,0.05)",
+        "pill-idle-border": "rgba(225,226,234,0.10)",
+        "pill-idle-text": "#E1E2EA",
+
+        "pill-connecting-dot": "#FBBF24",
+        "pill-connecting-bg": "rgba(180,83,9,0.08)",
+        "pill-connecting-border": "rgba(180,83,9,0.6)",
+        "pill-connecting-text": "#FDE68A",
+
+        "pill-disconnected-dot": "#F87171",
+        "pill-disconnected-bg": "rgba(153,27,27,0.10)",
+        "pill-disconnected-border": "rgba(153,27,27,0.6)",
+        "pill-disconnected-text": "#FECACA",
+
+        "btn-bg": "rgba(255,255,255,0.07)",
+        "btn-bg-off": "rgba(255,255,255,0.08)",
+        "btn-icon-on": "#FFFFFF",
+        "btn-icon-off": "#EF4444",
+        "end-call": "#EF4444",
+
+        "check-purple": "#7C3AED",
+
+        "header-text": "rgba(255,255,255,0.55)",
+        "header-text-faded": "rgba(255,255,255,0.38)",
+
+        "warn-yellow": "#FACC15",
+
+        card: "#1B1B1E",
+        "card-alt": "#28292B",
+        modal: "#101113",
+        dropdown: "#111111",
+        "btn-secondary": "#2E3037",
+        step: "#303033",
+        "step-hover": "#5E5E61",
+        muted: "#919093",
+        footer: "#464649",
+        "icon-gray": "#6b7280",
+        accent: "#D1BCFE",
+        "accent-bg": "#37265E",
+        you: "#0C4A6E",
+        "you-border": "#075985",
+        "agent-badge": "#713F12",
+        "agent-badge-text": "#FEF08A",
+        "agent-badge-border": "#854D0E",
+        danger: "#991B1B",
+        "danger-hover": "#B91C1C",
+        "danger-text": "#F87171",
+        "error-bg": "#FEE2E2",
+        "error-border": "#FECACA",
+      },
+      borderRadius: {
+        "fl-bar": "20px",
+        "fl-button": "10px",
+        "fl-pill": "20px",
+        "fl-square": "12px",
+        tile: "28px",
+        modal: "24px",
+        "modal-inner": "23px",
+        badge: "12px",
+        "badge-lg": "14px",
+        button: "8px",
+        "button-sm": "6px",
+      },
+      fontFamily: {
+        sans: ["Inter", "System"],
+      },
+    },
+  },
+  plugins: [],
+};
