@@ -25,10 +25,7 @@ export const SpeakerBottomSheet = ({
               <View className="self-center w-9 h-1 rounded-sm bg-white/20 mt-3 mb-2" />
 
               <View className="px-4 pt-1 pb-2">
-                <Text
-                  className="text-header-text text-xs font-medium"
-                  style={{ letterSpacing: 0.4 }}
-                >
+                <Text className="text-header-text text-xs font-medium tracking-[0.4px]">
                   AUDIO OUTPUT
                 </Text>
               </View>
@@ -39,7 +36,7 @@ export const SpeakerBottomSheet = ({
                   <Pressable
                     key={d.deviceId}
                     onPress={() => {
-                      onSelect?.(d.deviceId, d.label);
+                      onSelect?.(d.deviceId);
                       onClose();
                     }}
                     className="flex-row items-center px-4 py-3.5 active:bg-white/5"
@@ -52,7 +49,7 @@ export const SpeakerBottomSheet = ({
                             : "text-white/75 font-normal"
                         }`}
                       >
-                        {d.label}
+                        {d.deviceId}
                       </Text>
                     </View>
                     {isSelected && (

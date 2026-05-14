@@ -1,21 +1,25 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Platform } from "react-native";
+import { View, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+import { SwitchCamera } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   useMeeting,
   useAgentParticipant,
   useMediaDevice,
   switchAudioDevice,
+  createCameraVideoTrack,
 } from "@videosdk.live/react-native-sdk";
 import InCallManager from "@videosdk.live/react-native-incallmanager";
 
 import { TopVignette, BottomVignette } from "../widgets/Vignette";
 import { TopHeader } from "../widgets/TopHeader";
 import { MeetingOrb } from "../widgets/MeetingOrb";
+import { AgentTile } from "../widgets/AgentTile";
+import { UserTile } from "../widgets/UserTile";
+import { DraggableTile, TILE_CORNERS } from "../widgets/DraggableTile";
 import { TranscriptView } from "../widgets/TranscriptView";
 import { BottomBar } from "../widgets/BottomBar";
 import { SpeakerBottomSheet } from "../widgets/SpeakerBottomSheet";
-import { parseAgentState } from "../widgets/AgentStatePill";
 
 export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   const startTimeRef = useRef(new Date());
@@ -26,27 +30,32 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   const [speakerSheetOpen, setSpeakerSheetOpen] = useState(false);
   const [speakers, setSpeakers] = useState([]);
   const [selectedSpeaker, setSelectedSpeaker] = useState(null);
+  const [bigIsAgent, setBigIsAgent] = useState(false);
+  const [smallCorner, setSmallCorner] = useState(1);
+  const facingModeRef = useRef("front");
 
-  const { join, leave, participants, localParticipant } = useMeeting({
-    onMeetingJoined: () => {
-      try {
-        InCallManager.start({ media: "audio" });
-        InCallManager.setForceSpeakerphoneOn(true);
-      } catch (e) {}
-    },
-    onMeetingLeft: () => {
-      try {
-        InCallManager.stop();
-      } catch (e) {}
-      onLeave?.();
-    },
-    onParticipantJoined: (p) => {
-      if (p?.isAgent) setAgentParticipantId(p.id);
-    },
-    onParticipantLeft: (p) => {
-      if (p?.isAgent) onAgentLeft?.();
-    },
-  });
+  const { join, leave, participants, localParticipant, changeWebcam } =
+    useMeeting({
+      onMeetingJoined: () => {
+        setAgentState("connected");
+        try {
+          InCallManager.start({ media: "audio" });
+          InCallManager.setForceSpeakerphoneOn(true);
+        } catch (e) {}
+      },
+      onMeetingLeft: () => {
+        try {
+          InCallManager.stop();
+        } catch (e) {}
+        onLeave?.();
+      },
+      onParticipantJoined: (p) => {
+        if (p?.isAgent) setAgentParticipantId(p.id);
+      },
+      onParticipantLeft: (p) => {
+        if (p?.isAgent) onAgentLeft?.();
+      },
+    });
 
   const { getAudioDeviceList } = useMediaDevice();
 
@@ -80,8 +89,9 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   }, [localParticipant?.id]);
 
   useAgentParticipant(agentParticipantId, {
-    onAgentStateChanged: ({ state }) => {
-      setAgentState(parseAgentState(state));
+    onAgentStateChanged: (state) => {
+      console.log("[MeetingScreen] agent state changed:", state);
+      setAgentState(state);
     },
     onAgentTranscriptionReceived: (data) => {
       const text = data?.segment?.text;
@@ -105,11 +115,9 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   const refreshSpeakers = useCallback(async () => {
     try {
       const list = (await getAudioDeviceList()) || [];
-      const devices = list.map((d) => {
-        const id = typeof d === "string" ? d : d.deviceId;
-        const raw = typeof d === "string" ? d : d.label;
-        return { deviceId: id, label: prettyAudio(raw) };
-      });
+      const devices = list.map((d) => ({
+        deviceId: d.deviceId,
+      }));
       setSpeakers(devices);
       if (!selectedSpeaker && devices[0]) {
         setSelectedSpeaker(devices[0].deviceId);
@@ -124,10 +132,10 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     setSpeakerSheetOpen(true);
   };
 
-  const handleSelectSpeaker = (id, label) => {
-    setSelectedSpeaker(id);
+  const handleSelectSpeaker = (deviceId) => {
+    setSelectedSpeaker(deviceId);
     try {
-      switchAudioDevice(id);
+      switchAudioDevice(deviceId);
     } catch (e) {
       console.warn("switchAudioDevice failed", e);
     }
@@ -140,34 +148,110 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     onLeave?.();
   };
 
+  const swapTiles = useCallback(() => setBigIsAgent((v) => !v), []);
+
+  const handleSwitchCamera = useCallback(async () => {
+    console.log("[MeetingScreen] switch camera tapped");
+    try {
+      const next = facingModeRef.current === "front" ? "environment" : "front";
+      facingModeRef.current = next;
+      console.log("[MeetingScreen] creating track with facingMode:", next);
+      const track = await createCameraVideoTrack({ facingMode: next });
+      console.log("[MeetingScreen] track created:", track);
+      changeWebcam(track);
+      console.log("[MeetingScreen] changeWebcam invoked");
+    } catch (e) {
+      console.warn("[MeetingScreen] switch camera failed", e);
+    }
+  }, [changeWebcam]);
+
+  const bothJoined = !!agentParticipantId && !!localParticipant?.id;
+
   return (
     <View className="flex-1 bg-fl-bg">
       <TopVignette height={200} />
       <BottomVignette height={260} opacity={0.7} />
 
-      <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-        <TopHeader
-          variant="meeting"
-          agentState={agentState}
-          onSpeakerPress={handleSpeakerPress}
-        />
+      {bothJoined ? (
+        <>
+          <View className="absolute top-[130px] left-4">
+            {bigIsAgent ? (
+              <AgentTile
+                participantId={agentParticipantId}
+                agentState={agentState}
+                variant="big"
+              />
+            ) : (
+              <UserTile participantId={localParticipant.id} variant="big" />
+            )}
+          </View>
 
-        <View className="flex-1 items-center justify-center">
+          {smallCorner !== 1 && (
+            <Pressable
+              onPress={handleSwitchCamera}
+              style={{
+                position: "absolute",
+                left: TILE_CORNERS[1].x,
+                top: TILE_CORNERS[1].y,
+              }}
+              className="w-[100px] h-[150px] rounded-[12px] border-2 border-dashed border-white/25 bg-black/40 items-center justify-center active:opacity-70"
+            >
+              <SwitchCamera
+                size={28}
+                color="rgba(255,255,255,0.7)"
+                strokeWidth={2}
+              />
+            </Pressable>
+          )}
+
+          <DraggableTile
+            initialCorner={1}
+            onCornerChange={setSmallCorner}
+            onTap={swapTiles}
+          >
+            {bigIsAgent ? (
+              <UserTile participantId={localParticipant.id} variant="small" />
+            ) : (
+              <AgentTile
+                participantId={agentParticipantId}
+                agentState={agentState}
+                variant="small"
+              />
+            )}
+          </DraggableTile>
+        </>
+      ) : (
+        <View className="absolute inset-0 items-center justify-center">
           <MeetingOrb agentState={agentState} />
         </View>
+      )}
 
-        <View>
-          {transcripts.length > 0 && (
-            <View className="mb-2">
-              <TranscriptView messages={transcripts} />
-            </View>
-          )}
-          <BottomBar
-            startTime={startTimeRef.current}
-            onEndCall={handleEndCall}
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
+          <TopHeader
+            variant="meeting"
+            agentState={agentState}
+            onSpeakerPress={handleSpeakerPress}
           />
-        </View>
-      </SafeAreaView>
+
+          <View className="flex-1" />
+
+          <View>
+            {transcripts.length > 0 && (
+              <View className="mb-2">
+                <TranscriptView messages={transcripts} />
+              </View>
+            )}
+            <BottomBar
+              startTime={startTimeRef.current}
+              onEndCall={handleEndCall}
+            />
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
 
       <SpeakerBottomSheet
         isOpen={speakerSheetOpen}
@@ -178,14 +262,4 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
       />
     </View>
   );
-};
-
-const prettyAudio = (raw) => {
-  if (!raw) return "Audio";
-  const s = String(raw).toUpperCase();
-  if (s.includes("SPEAKER")) return "Speaker";
-  if (s.includes("EARPIECE")) return Platform.OS === "ios" ? "iPhone" : "Phone";
-  if (s.includes("WIRED")) return "Wired Headset";
-  if (s.includes("BLUETOOTH")) return "Bluetooth";
-  return raw;
 };

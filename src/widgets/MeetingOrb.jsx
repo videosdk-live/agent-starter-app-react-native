@@ -2,22 +2,22 @@ import React, { useEffect, useRef } from "react";
 import { View, Animated, Easing } from "react-native";
 import FastImage from "react-native-fast-image";
 import sampleGif from "../assets/sample_gif.gif";
-import { parseAgentState } from "./AgentStatePill";
 
 const GLOW_COLOR = {
   speaking: "rgba(14,165,233,0.45)",
   thinking: "rgba(124,58,237,0.45)",
   listening: "rgba(156,163,175,0.35)",
-  idle: "rgba(225,226,234,0.0)",
 };
 
-export const MeetingOrb = ({ agentState }) => {
-  const key = parseAgentState(agentState);
+export const MeetingOrb = ({ agentState, size = 280 }) => {
+  const key = String(agentState || "").toLowerCase();
+  const color = GLOW_COLOR[key];
   const glow = useRef(new Animated.Value(0.25)).current;
+  const innerSize = Math.round(size * (260 / 280));
 
   useEffect(() => {
     glow.stopAnimation();
-    if (key === "idle") {
+    if (!color) {
       Animated.timing(glow, {
         toValue: 0,
         duration: 300,
@@ -41,21 +41,27 @@ export const MeetingOrb = ({ agentState }) => {
         }),
       ]),
     ).start();
-  }, [key, glow]);
+  }, [color, glow]);
 
   return (
-    <View className="w-[280px] h-[280px] items-center justify-center">
+    <View
+      className="items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <Animated.View
         pointerEvents="none"
-        className="absolute w-[280px] h-[280px] rounded-[140px]"
+        className="absolute"
         style={{
-          backgroundColor: GLOW_COLOR[key],
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
           opacity: glow,
         }}
       />
       <FastImage
         source={sampleGif}
-        style={{ width: 260, height: 260 }}
+        style={{ width: innerSize, height: innerSize }}
         resizeMode={FastImage.resizeMode.contain}
       />
     </View>

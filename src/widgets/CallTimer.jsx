@@ -19,10 +19,7 @@ export const CallTimer = ({ startTime }) => {
   const s = String(seconds % 60).padStart(2, "0");
 
   return (
-    <Text
-      className="text-white text-[13px] font-medium"
-      style={{ fontVariant: ["tabular-nums"] }}
-    >
+    <Text className="w-[50px] h-5 text-neutral-400 text-sm font-normal font-sans leading-5 text-center tabular-nums">
       {m}:{s}
     </Text>
   );

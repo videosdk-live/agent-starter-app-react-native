@@ -2,11 +2,13 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { ChevronUp, ChevronDown } from "lucide-react-native";
 import { SpeakerIndicator } from "./SpeakerIndicator";
+import { buttonShadow } from "../lib/shadows";
 
 export const BarButton = ({
   Icon,
   onPress,
   isOff = false,
+  isActive = false,
   showChevron = false,
   onChevronPress,
   isMenuOpen = false,
@@ -15,33 +17,34 @@ export const BarButton = ({
   showPermissionWarning = false,
 }) => {
   const iconColor = isOff ? "#EF4444" : "#FFFFFF";
-  const width = showChevron ? 56 : showSpeakerIndicator ? 64 : 32;
-  const height = 32;
+  const widthClass = showChevron
+    ? "w-14"
+    : showSpeakerIndicator
+    ? "w-[50px]"
+    : "w-8";
+
+  const bgClass = isActive ? "bg-primary-800" : "bg-neutral-900";
+  const borderClass = isActive ? "border-primary-200" : "border-neutral-800";
 
   const ChevronIcon = isMenuOpen ? ChevronUp : ChevronDown;
 
   return (
-    <View style={{ width, height }}>
+    <View className={`h-8 ${widthClass}`}>
       <View
-        className={`h-8 rounded-fl-button flex-row items-center ${
-          isOff ? "bg-btn-bg-off" : "bg-btn-bg"
-        }`}
-        style={{ width }}
+        className={`h-8 rounded-[8px] border-[0.5px] ${borderClass} ${bgClass} flex-row items-center ${widthClass}`}
+        style={buttonShadow}
       >
         <Pressable
           onPress={onPress}
-          className="flex-1 h-8 flex-row items-center justify-center active:opacity-70"
-          style={{ paddingLeft: showSpeakerIndicator ? 10 : 0 }}
+          className={`flex-1 h-8 flex-row items-center justify-center active:opacity-70 gap-1 ${
+            showSpeakerIndicator ? "pl-1 pr-2 py-1" : ""
+          }`}
         >
-          <Icon size={18} color={iconColor} strokeWidth={2} />
+          <View className="w-6 h-6 rounded-[4px] p-1 items-center justify-center">
+            <Icon size={16} color={iconColor} strokeWidth={2} />
+          </View>
 
-          {showSpeakerIndicator && (
-            <>
-              <View className="w-1.5" />
-              <SpeakerIndicator isSpeaking={isSpeaking} />
-              <View className="w-1.5" />
-            </>
-          )}
+          {showSpeakerIndicator && <SpeakerIndicator isSpeaking={isSpeaking} />}
         </Pressable>
 
         {showChevron && (

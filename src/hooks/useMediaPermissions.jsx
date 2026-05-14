@@ -1,78 +1,66 @@
 import { useState, useEffect, useCallback } from "react";
-import { Platform, AppState } from "react-native";
-import {
-  check,
-  request,
-  PERMISSIONS,
-  RESULTS,
-  openSettings,
-} from "react-native-permissions";
-
-const MIC_PERM =
-  Platform.OS === "ios"
-    ? PERMISSIONS.IOS.MICROPHONE
-    : PERMISSIONS.ANDROID.RECORD_AUDIO;
-
-const CAM_PERM =
-  Platform.OS === "ios" ? PERMISSIONS.IOS.CAMERA : PERMISSIONS.ANDROID.CAMERA;
+import { AppState } from "react-native";
+import { useMediaDevice, Constants } from "@videosdk.live/react-native-sdk";
 
 export const useMediaPermissions = () => {
+  const { checkPermission, requestPermission: sdkRequestPermission } =
+    useMediaDevice();
   const [audioPermission, setAudioPermission] = useState(false);
   const [videoPermission, setVideoPermission] = useState(false);
-  const [micDecline, setMicDecline] = useState(false);
-  const [camDecline, setCamDecline] = useState(false);
 
-  const refreshPermissions = useCallback(async () => {
+  const refresh = useCallback(async () => {
     try {
-      const [audio, video] = await Promise.all([
-        check(MIC_PERM),
-        check(CAM_PERM),
-      ]);
-
-      setAudioPermission(audio === RESULTS.GRANTED);
-      setVideoPermission(video === RESULTS.GRANTED);
-      setMicDecline(audio === RESULTS.BLOCKED || audio === RESULTS.DENIED);
-      setCamDecline(video === RESULTS.BLOCKED || video === RESULTS.DENIED);
+      const map = await checkPermission(Constants.permission.AUDIO_AND_VIDEO);
+      setAudioPermission(!!map.get(Constants.permission.AUDIO));
+      setVideoPermission(!!map.get(Constants.permission.VIDEO));
     } catch (e) {
-      console.error("Error checking permissions", e);
+      console.warn("checkPermission failed", e);
     }
-  }, []);
+  }, [checkPermission]);
 
   useEffect(() => {
-    refreshPermissions();
-
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state === "active") refreshPermissions();
+    refresh();
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") refresh();
     });
     return () => sub.remove();
-  }, [refreshPermissions]);
+  }, [refresh]);
 
-  const handleRequest = useCallback(
+  const requestPermission = useCallback(
     async (type) => {
-      const perm = type === "mic" ? MIC_PERM : CAM_PERM;
+      const permType =
+        type === "mic"
+          ? Constants.permission.AUDIO
+          : type === "cam"
+          ? Constants.permission.VIDEO
+          : Constants.permission.AUDIO_AND_VIDEO;
+
       try {
-        const result = await request(perm);
-
-        if (result === RESULTS.BLOCKED) {
-          openSettings().catch(() => {});
-        }
-
-        await refreshPermissions();
-        return result === RESULTS.GRANTED;
+        const map = await sdkRequestPermission(permType);
+        const granted =
+          type === "mic"
+            ? !!map.get(Constants.permission.AUDIO)
+            : type === "cam"
+            ? !!map.get(Constants.permission.VIDEO)
+            : !!map.get(Constants.permission.AUDIO) &&
+              !!map.get(Constants.permission.VIDEO);
+        await refresh();
+        return granted;
       } catch (e) {
-        console.error("Request permission failed", e);
+        console.warn("requestPermission failed", e);
+        await refresh();
         return false;
       }
     },
-    [refreshPermissions],
+    [sdkRequestPermission, refresh],
   );
 
   return {
     audioPermission,
     videoPermission,
-    micDecline,
-    camDecline,
-    requestPermission: handleRequest,
-    refreshPermissions,
+    micDecline: !audioPermission,
+    camDecline: !videoPermission,
+    requestPermission,
+    refreshPermissions: refresh,
   };
 };

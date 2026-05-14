@@ -1,11 +1,7 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Volume2 } from "lucide-react-native";
-import {
-  AgentStatePill,
-  ConnectingPill,
-  DisconnectedPill,
-} from "./AgentStatePill";
+import { AgentStatePill } from "./AgentStatePill";
 
 export const TopHeader = ({
   variant = "meeting",
@@ -13,29 +9,22 @@ export const TopHeader = ({
   isDisconnected = false,
   agentState,
   onSpeakerPress,
-  poweredTextOpacity,
 }) => {
-  const opacity = poweredTextOpacity ?? (variant === "join" ? 0.38 : 0.55);
-
-  let pill = null;
-  if (isDisconnected) pill = <DisconnectedPill />;
-  else if (isConnecting) pill = <ConnectingPill />;
-  else if (variant === "meeting") pill = <AgentStatePill state={agentState} />;
+  let pillState = null;
+  if (isDisconnected) pillState = "disconnected";
+  else if (isConnecting) pillState = "connecting";
+  else if (variant === "meeting") pillState = agentState;
 
   return (
     <View className="px-4 pt-2">
       <View className="items-center justify-center min-h-[62px] relative">
-        <Text
-          className="text-[13px] font-normal"
-          style={{
-            color: `rgba(255,255,255,${opacity})`,
-            letterSpacing: 0.2,
-          }}
-        >
+        <Text className="w-[251px] h-4 text-xs font-normal font-sans leading-4 text-center text-neutral-700">
           Powered by VideoSDK
         </Text>
 
-        <View className="mt-1.5 h-8 items-center justify-center">{pill}</View>
+        <View className="mt-1.5 h-8 items-center justify-center">
+          {pillState && <AgentStatePill state={pillState} />}
+        </View>
 
         {variant === "meeting" && (
           <Pressable

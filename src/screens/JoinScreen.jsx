@@ -25,8 +25,7 @@ export const JoinScreen = ({ isConnecting, isDisconnected, onTalkPress }) => {
         </View>
 
         <View
-          className="px-4 pb-4"
-          style={{ opacity: isConnecting ? 0 : 1 }}
+          className={`px-6 pb-6 ${isConnecting ? "opacity-0" : "opacity-100"}`}
           pointerEvents={isConnecting ? "none" : "auto"}
         >
           <TalkButton onPress={onTalkPress} disabled={isConnecting} />

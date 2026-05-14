@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
 
 const HEIGHT_PROFILE = [0.6, 1.0, 0.6];
-const WIDTH = 18;
-const HEIGHT = 16;
+const WIDTH = 10;
+const HEIGHT = 10;
 
 const Bar = ({ index, t, isSpeaking }) => {
   const phase = (index / HEIGHT_PROFILE.length) * 2 * Math.PI;
@@ -72,10 +72,7 @@ export const SpeakerIndicator = ({ isSpeaking = false }) => {
   }, [isSpeaking, t]);
 
   return (
-    <View
-      className="flex-row items-center justify-center"
-      style={{ width: WIDTH, height: HEIGHT }}
-    >
+    <View className="flex-row items-center justify-center w-[10px] h-[10px]">
       {HEIGHT_PROFILE.map((_, i) => (
         <Bar key={i} index={i} t={t} isSpeaking={isSpeaking} />
       ))}

@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, Modal } from "react-native";
 import { X } from "lucide-react-native";
 import { cn } from "../lib/utils";
+import { buttonShadow } from "../lib/shadows";
 
 const BaseModal = ({
   isOpen,
@@ -24,7 +25,7 @@ const BaseModal = ({
         style={{ zIndex }}
       >
         <View
-          className="bg-modal rounded-modal w-[500px] max-w-[92%] h-[154px] border border-white/5 px-6 py-5 justify-between"
+          className="bg-modal rounded-[24px] w-[350px] min-w-[300px] max-w-full h-[154px] border border-white/5 px-6 py-5 justify-between"
           style={{
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 25 },
@@ -46,7 +47,7 @@ const BaseModal = ({
                 <X size={20} color="#FFFFFF" />
               </Pressable>
             </View>
-            <Text className="text-muted text-xs leading-4 font-normal">
+            <Text className="text-neutral-400 text-xs leading-4 font-normal">
               {description}
             </Text>
           </View>
@@ -57,25 +58,23 @@ const BaseModal = ({
                 key={i}
                 onPress={action.onClick}
                 style={({ pressed }) => ({
-                  width: action.width ?? 126,
+                  width: action.width ?? 88,
                   transform: [{ scale: pressed ? 0.95 : 1 }],
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 4,
-                  elevation: 4,
+                  ...(action.variant === "primary" ? buttonShadow : {}),
                 })}
                 className={cn(
-                  "h-8 rounded-button items-center justify-center",
+                  "h-8 rounded-button items-center justify-center px-3 py-1.5",
                   action.variant === "primary"
-                    ? "bg-accent"
+                    ? "bg-primary-200"
                     : "bg-btn-secondary",
                 )}
               >
                 <Text
                   className={cn(
-                    "text-xs font-medium",
-                    action.variant === "primary" ? "text-modal" : "text-white",
+                    "text-sm font-medium font-sans leading-5",
+                    action.variant === "primary"
+                      ? "text-primary-800"
+                      : "text-white",
                   )}
                 >
                   {action.label}

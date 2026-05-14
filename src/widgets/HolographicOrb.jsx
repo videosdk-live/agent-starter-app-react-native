@@ -1,59 +1,29 @@
-import React, { useEffect, useRef } from "react";
-import { View, Animated, Easing } from "react-native";
+import React from "react";
+import { View } from "react-native";
 import FastImage from "react-native-fast-image";
 import sampleGif from "../assets/sample_gif.gif";
+import { Spinner } from "./Spinner";
 
 export const HolographicOrb = ({ isConnecting = false }) => {
   return (
-    <View className="w-[260px] h-[260px] items-center justify-center">
+    <View
+      className="w-[250px] h-[250px] items-center justify-center"
+      style={{ marginLeft: -0.5 }}
+    >
       <FastImage
         source={sampleGif}
-        style={{ width: 260, height: 260 }}
+        className="w-[250px] h-[250px]"
         resizeMode={FastImage.resizeMode.contain}
       />
 
       {isConnecting && (
         <View
           pointerEvents="none"
-          className="absolute inset-0 rounded-[130px] overflow-hidden bg-black/45 items-center justify-center"
+          className="absolute inset-0 rounded-[125px] overflow-hidden bg-black/45 items-center justify-center"
         >
-          <CircularSpinner />
+          <Spinner size={24} color="#FFFFFF" />
         </View>
       )}
     </View>
-  );
-};
-
-const CircularSpinner = () => {
-  const rotation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [rotation]);
-
-  const spin = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-
-  return (
-    <Animated.View
-      className="w-8 h-8 rounded-full"
-      style={{
-        borderWidth: 2.5,
-        borderColor: "rgba(255,255,255,0.25)",
-        borderTopColor: "#FFFFFF",
-        transform: [{ rotate: spin }],
-      }}
-    />
   );
 };

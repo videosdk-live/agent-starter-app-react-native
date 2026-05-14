@@ -1,81 +1,32 @@
 import React from "react";
 import { View, Text } from "react-native";
+import { STATUS_CONFIGS } from "../lib/statusConfigs";
 
-const PILL_CONFIG = {
-  speaking: {
-    label: "Speaking",
-    dotClass: "bg-pill-speaking-dot",
-    borderClass: "border-pill-speaking-border",
-    bgClass: "bg-pill-speaking-bg",
-    textClass: "text-pill-speaking-text",
-  },
-  thinking: {
-    label: "Thinking",
-    dotClass: "bg-pill-thinking-dot",
-    borderClass: "border-pill-thinking-border",
-    bgClass: "bg-pill-thinking-bg",
-    textClass: "text-pill-thinking-text",
-  },
-  listening: {
-    label: "Listening",
-    dotClass: "bg-pill-listening-dot",
-    borderClass: "border-pill-listening-border",
-    bgClass: "bg-pill-listening-bg",
-    textClass: "text-pill-listening-text",
-  },
-  idle: {
-    label: "Idle",
-    dotClass: "bg-pill-idle-dot",
-    borderClass: "border-pill-idle-border",
-    bgClass: "bg-pill-idle-bg",
-    textClass: "text-pill-idle-text",
-  },
-};
-
-export const parseAgentState = (raw) => {
-  const s = String(raw || "").toLowerCase();
-  if (s.includes("listen")) return "listening";
-  if (s.includes("speak")) return "speaking";
-  if (s.includes("think") || s.includes("process")) return "thinking";
-  return "idle";
-};
-
-const Pill = ({ label, dotClass, borderClass, bgClass, textClass }) => (
+const Pill = ({ config }) => (
   <View
-    className={`flex-row items-center px-3 py-1.5 rounded-fl-pill border ${borderClass} ${bgClass}`}
+    className="h-5 px-1.5 py-0.5 rounded-[12px] border items-center justify-center"
+    style={{
+      width: config.w,
+      backgroundColor: config.bg,
+      borderColor: config.border,
+    }}
   >
-    <View className={`w-[7px] h-[7px] rounded-full ${dotClass}`} />
-    <View className="w-1.5" />
+    <View className="absolute inset-y-0 left-1.5 justify-center">
+      <View
+        className="w-2 h-2 rounded-full"
+        style={{ backgroundColor: config.dot }}
+      />
+    </View>
     <Text
-      className={`text-[13px] font-medium ${textClass}`}
-      style={{ letterSpacing: 0.2 }}
+      className="text-xs font-normal font-sans leading-4"
+      style={{ color: config.color }}
     >
-      {label}
+      {config.text}
     </Text>
   </View>
 );
 
 export const AgentStatePill = ({ state }) => {
-  const key = parseAgentState(state);
-  return <Pill {...PILL_CONFIG[key]} />;
+  const key = String(state || "").toLowerCase();
+  return <Pill config={STATUS_CONFIGS[key] ?? STATUS_CONFIGS.idle} />;
 };
-
-export const ConnectingPill = () => (
-  <Pill
-    label="Connecting..."
-    dotClass="bg-pill-connecting-dot"
-    borderClass="border-pill-connecting-border"
-    bgClass="bg-pill-connecting-bg"
-    textClass="text-pill-connecting-text"
-  />
-);
-
-export const DisconnectedPill = () => (
-  <Pill
-    label="Disconnected"
-    dotClass="bg-pill-disconnected-dot"
-    borderClass="border-pill-disconnected-border"
-    bgClass="bg-pill-disconnected-bg"
-    textClass="text-pill-disconnected-text"
-  />
-);
