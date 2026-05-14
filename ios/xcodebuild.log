@@ -1,0 +1,6 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace MyApp.xcworkspace -scheme MyApp -configuration Debug -destination "platform=iOS Simulator,name=iPhone SE" -sdk iphonesimulator -derivedDataPath build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator26.5
+
