@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, View } from "react-native";
+import { COLORS } from "../lib/colors";
 
 const HEIGHTS = [0.4, 0.72, 1.0, 0.72, 0.4];
 
@@ -34,7 +35,7 @@ const Bar = ({ index, t, color, barWidth, barSpacing, size }) => {
   );
 };
 
-export const WaveformIcon = ({ color = "#37265E", size = 20 }) => {
+export const WaveformIcon = ({ color = COLORS.brandPurple, size = 20 }) => {
   const t = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

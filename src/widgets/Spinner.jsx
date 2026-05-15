@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { View, Animated, Easing } from "react-native";
+import { COLORS } from "../lib/colors";
 
 export const Spinner = ({
   size = 24,
-  color = "#FFFFFF",
+  color = COLORS.white,
   count = 8,
   duration = 1000,
   style,

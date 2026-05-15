@@ -1,10 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, TextInput, Platform } from "react-native";
-import Animated, {
-  LinearTransition,
-  FadeIn,
-  FadeOut,
-} from "react-native-reanimated";
+import Animated, { FadeIn, Easing } from "react-native-reanimated";
 import { useMeeting, usePubSub } from "@videosdk.live/react-native-sdk";
 import VideosdkRPK from "../../VideosdkRPK";
 import {
@@ -13,6 +9,7 @@ import {
   Video,
   VideoOff,
   MonitorUp,
+  MonitorOff,
   MessageSquareText,
   MessageSquareX,
   SendHorizontal,
@@ -23,6 +20,7 @@ import { CallTimer } from "./CallTimer";
 import { useMediaPermissions } from "../hooks/useMediaPermissions";
 import PermissionDeniedModal from "../components/PermissionDeniedModal";
 import { buttonShadow } from "../lib/shadows";
+import { COLORS } from "../lib/colors";
 
 export const BottomBar = ({ startTime, onEndCall }) => {
   const {
@@ -42,7 +40,6 @@ export const BottomBar = ({ startTime, onEndCall }) => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatText, setChatText] = useState("");
   const [permModalType, setPermModalType] = useState(null);
-  const inputRef = useRef(null);
 
   const micOn = localParticipant?.micOn ?? false;
   const camOn = localParticipant?.webcamOn ?? false;
@@ -51,51 +48,22 @@ export const BottomBar = ({ startTime, onEndCall }) => {
   const canSend = chatText.trim().length > 0;
 
   useEffect(() => {
-    if (!chatOpen) return;
-    const t = setTimeout(() => inputRef.current?.focus(), 250);
-    return () => clearTimeout(t);
-  }, [chatOpen]);
-
-  useEffect(() => {
-    console.log("[ScreenShare][JS] localScreenShareOn changed:", screenShareOn);
-  }, [screenShareOn]);
-
-  useEffect(() => {
     if (Platform.OS !== "ios") return;
-    console.log("[ScreenShare][JS] subscribing to VideosdkRPK onScreenShare");
     const sub = VideosdkRPK.addListener("onScreenShare", (event) => {
-      console.log("[ScreenShare][JS] onScreenShare event received:", event);
-      if (event === "START_BROADCAST") {
-        console.log("[ScreenShare][JS] calling enableScreenShare()");
-        enableScreenShare();
-      } else if (event === "STOP_BROADCAST") {
-        console.log("[ScreenShare][JS] calling disableScreenShare()");
-        disableScreenShare();
-      }
+      if (event === "START_BROADCAST") enableScreenShare();
+      else if (event === "STOP_BROADCAST") disableScreenShare();
     });
-    return () => {
-      console.log("[ScreenShare][JS] unsubscribing onScreenShare listener");
-      sub.remove();
-    };
+    return () => sub.remove();
   }, [enableScreenShare, disableScreenShare]);
 
   const handleScreenShare = () => {
-    console.log(
-      "[ScreenShare][JS] handleScreenShare tapped, screenShareOn:",
-      screenShareOn,
-      "platform:",
-      Platform.OS,
-    );
     if (screenShareOn) {
-      console.log("[ScreenShare][JS] -> disableScreenShare()");
       disableScreenShare();
       return;
     }
     if (Platform.OS === "ios") {
-      console.log("[ScreenShare][JS] -> VideosdkRPK.startBroadcast()");
       VideosdkRPK.startBroadcast();
     } else {
-      console.log("[ScreenShare][JS] -> enableScreenShare() (android)");
       enableScreenShare();
     }
   };
@@ -108,6 +76,7 @@ export const BottomBar = ({ startTime, onEndCall }) => {
     try {
       await publish(text);
       setChatText("");
+      setChatOpen(false);
     } catch (e) {
       console.warn("chat publish failed", e);
     }
@@ -115,26 +84,23 @@ export const BottomBar = ({ startTime, onEndCall }) => {
 
   return (
     <>
-      <Animated.View
-        layout={LinearTransition.duration(250)}
-        className="self-center mb-3 w-[370px] max-w-full border border-[#FFFFFF33] overflow-hidden"
+      <View
+        className="mx-3 mb-3 border border-fl-divider overflow-hidden"
         style={{
-          backgroundColor: "#000000",
-          borderRadius: 24,
+          backgroundColor: COLORS.surfaceCard,
+          borderRadius: 20,
         }}
       >
         {chatOpen && (
           <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
+            entering={FadeIn.duration(180).easing(Easing.out(Easing.cubic))}
           >
             <View className="h-16 px-4 flex-row items-center justify-between">
               <TextInput
-                ref={inputRef}
                 value={chatText}
                 onChangeText={setChatText}
                 placeholder="Type something..."
-                placeholderTextColor="#77777A"
+                placeholderTextColor={COLORS.inputPlaceholder}
                 className="flex-1 text-white text-sm font-normal font-sans leading-5 mr-3"
                 onSubmitEditing={sendChat}
                 returnKeyType="send"
@@ -145,14 +111,14 @@ export const BottomBar = ({ startTime, onEndCall }) => {
                 style={[buttonShadow, { opacity: canSend ? 1 : 0.5 }]}
                 className="w-8 h-8 rounded-[6px] p-1.5 bg-neutral-800 items-center justify-center active:opacity-70"
               >
-                <SendHorizontal size={20} color="#FFFFFF" strokeWidth={2} />
+                <SendHorizontal size={20} color={COLORS.white} strokeWidth={2} />
               </Pressable>
             </View>
             <View className="self-center w-[338px] h-px bg-white/10" />
           </Animated.View>
         )}
 
-        <View className="h-[55px] px-4 py-3 flex-row items-center justify-between gap-1.5">
+        <View className="px-3 py-2.5 flex-row items-center justify-between gap-1.5">
           <View className="flex-row items-center gap-1.5">
             <CallTimer startTime={startTime} />
 
@@ -185,7 +151,7 @@ export const BottomBar = ({ startTime, onEndCall }) => {
             />
 
             <BarButton
-              Icon={MonitorUp}
+              Icon={screenShareOn ? MonitorOff : MonitorUp}
               isOff={false}
               isActive={screenShareOn}
               onPress={handleScreenShare}
@@ -208,7 +174,7 @@ export const BottomBar = ({ startTime, onEndCall }) => {
             </Text>
           </Pressable>
         </View>
-      </Animated.View>
+      </View>
 
       <PermissionDeniedModal
         isOpen={!!permModalType}

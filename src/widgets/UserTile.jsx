@@ -1,54 +1,74 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import {
   useParticipant,
   RTCView,
   MediaStream,
 } from "@videosdk.live/react-native-sdk";
+import { COLORS } from "../lib/colors";
 
-const VARIANTS = {
-  big: {
-    sizeClass: "w-[370px] h-[570px] rounded-[24px]",
-    avatarClass: "w-16 h-16",
-    avatarTextClass: "text-2xl",
-  },
-  small: {
-    sizeClass: "w-[100px] h-[150px] rounded-[12px]",
-    avatarClass: "w-10 h-10",
-    avatarTextClass: "text-base",
-  },
-};
-
-export const UserTile = ({ participantId, variant = "big", onPress }) => {
-  const { webcamStream, webcamOn, displayName } = useParticipant(participantId);
-  const { sizeClass, avatarClass, avatarTextClass } = VARIANTS[variant];
+export const UserTile = ({
+  participantId,
+  avatarSize = 64,
+  borderRadius = 0,
+}) => {
+  const { webcamStream, webcamOn, displayName } = useParticipant(
+    participantId ?? "",
+  );
   const hasVideo = webcamOn && webcamStream?.track;
 
-  const Container = onPress ? Pressable : View;
-
   return (
-    <Container
-      onPress={onPress}
-      className={`${sizeClass} overflow-hidden bg-neutral-900`}
-    >
+    <View style={[styles.root, { borderRadius, overflow: "hidden" }]}>
       {hasVideo ? (
         <RTCView
           streamURL={new MediaStream([webcamStream.track]).toURL()}
           objectFit="cover"
           mirror
-          style={{ width: "100%", height: "100%" }}
+          style={[styles.video, { borderRadius }]}
         />
       ) : (
-        <View className="flex-1 items-center justify-center">
+        <View style={styles.fallback}>
           <View
-            className={`${avatarClass} rounded-full bg-[#3A3A3C] items-center justify-center`}
+            style={[
+              styles.avatar,
+              {
+                width: avatarSize,
+                height: avatarSize,
+                borderRadius: avatarSize / 2,
+              },
+            ]}
           >
-            <Text className={`text-white ${avatarTextClass} font-semibold`}>
+            <Text style={[styles.avatarText, { fontSize: avatarSize * 0.38 }]}>
               {displayName?.[0]?.toUpperCase() ?? "U"}
             </Text>
           </View>
         </View>
       )}
-    </Container>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  video: {
+    width: "100%",
+    height: "100%",
+  },
+  fallback: {
+    flex: 1,
+    backgroundColor: COLORS.surfaceCard,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatar: {
+    backgroundColor: COLORS.surfaceAvatar,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    color: COLORS.white,
+    fontWeight: "600",
+  },
+});

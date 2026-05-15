@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Volume2 } from "lucide-react-native";
 import { AgentStatePill } from "./AgentStatePill";
+import { COLORS } from "../lib/colors";
 
 export const TopHeader = ({
   variant = "meeting",
@@ -15,27 +16,64 @@ export const TopHeader = ({
   else if (isConnecting) pillState = "connecting";
   else if (variant === "meeting") pillState = agentState;
 
+  const subtitleColor = variant === "join" ? COLORS.white38 : COLORS.white55;
+
   return (
-    <View className="px-4 pt-2">
-      <View className="items-center justify-center min-h-[62px] relative">
-        <Text className="w-[251px] h-4 text-xs font-normal font-sans leading-4 text-center text-neutral-700">
+    <View style={styles.wrapper}>
+      <View style={styles.center}>
+        <Text style={[styles.subtitle, { color: subtitleColor }]}>
           Powered by VideoSDK
         </Text>
-
-        <View className="mt-1.5 h-8 items-center justify-center">
+        <View style={styles.pillSlot}>
           {pillState && <AgentStatePill state={pillState} />}
         </View>
-
-        {variant === "meeting" && (
-          <Pressable
-            onPress={onSpeakerPress}
-            hitSlop={6}
-            className="absolute right-0 top-0 w-10 h-10 rounded-fl-square bg-white/10 items-center justify-center active:opacity-70"
-          >
-            <Volume2 size={20} color="#FFFFFF" strokeWidth={2} />
-          </Pressable>
-        )}
       </View>
+
+      {variant === "meeting" && (
+        <Pressable
+          onPress={onSpeakerPress}
+          hitSlop={6}
+          style={styles.speakerBtn}
+        >
+          <Volume2 size={20} color={COLORS.white} strokeWidth={2} />
+        </Pressable>
+      )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  wrapper: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    position: "relative",
+    alignItems: "center",
+  },
+  center: {
+    alignItems: "center",
+    minHeight: 62,
+    justifyContent: "center",
+  },
+  subtitle: {
+    fontSize: 13,
+    fontWeight: "400",
+    letterSpacing: 0.2,
+  },
+  pillSlot: {
+    marginTop: 6,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  speakerBtn: {
+    position: "absolute",
+    right: 16,
+    top: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: COLORS.white10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

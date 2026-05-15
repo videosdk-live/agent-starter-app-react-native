@@ -62,7 +62,6 @@ export const verifyMeeting = async (meetingId) => {
 };
 
 export const dispatchAgent = async ({ meetingId }) => {
-  return true;
   try {
     if (!AUTH_TOKEN) throw new Error("AUTH_TOKEN is missing");
     if (!AGENT_ID) throw new Error("AGENT_ID is missing");
@@ -107,13 +106,9 @@ export const dispatchAgent = async ({ meetingId }) => {
       body: JSON.stringify(body),
     });
 
-    if (res.ok) {
-      console.log("API success:", res.status);
-      return true;
-    } else {
-      console.error("API failed:", res.status);
-      return false;
-    }
+    if (res.ok) return true;
+    console.error("API failed:", res.status);
+    return false;
   } catch (error) {
     console.error("API failed:", error);
     return false;

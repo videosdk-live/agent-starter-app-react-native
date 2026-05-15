@@ -2,6 +2,7 @@ import React from "react";
 import { Modal, View, Text, Pressable } from "react-native";
 import { Check } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS } from "../lib/colors";
 
 export const SpeakerBottomSheet = ({
   isOpen,
@@ -31,12 +32,12 @@ export const SpeakerBottomSheet = ({
               </View>
 
               {devices.map((d) => {
-                const isSelected = d.deviceId === selectedDeviceId;
+                const isSelected = d.label === selectedDeviceId;
                 return (
                   <Pressable
-                    key={d.deviceId}
+                    key={d.label ?? d.deviceId}
                     onPress={() => {
-                      onSelect?.(d.deviceId);
+                      onSelect?.(d.label);
                       onClose();
                     }}
                     className="flex-row items-center px-4 py-3.5 active:bg-white/5"
@@ -49,11 +50,11 @@ export const SpeakerBottomSheet = ({
                             : "text-white/75 font-normal"
                         }`}
                       >
-                        {d.deviceId}
+                        {d.label ?? d.deviceId}
                       </Text>
                     </View>
                     {isSelected && (
-                      <Check size={18} color="#7C3AED" strokeWidth={2.5} />
+                      <Check size={18} color={COLORS.accentViolet} strokeWidth={2.5} />
                     )}
                   </Pressable>
                 );

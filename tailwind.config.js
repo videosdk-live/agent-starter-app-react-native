@@ -6,33 +6,27 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Surface
-        "fl-bg": "#000000",
-        "fl-bar": "#1C1C1E",
-        "fl-sheet": "#1C1C1E",
-        "fl-divider": "rgba(255,255,255,0.07)",
+        "fl-bg": COLORS.surfaceBg,
+        "fl-bar": COLORS.surfaceCard,
+        "fl-sheet": COLORS.surfaceCard,
+        "fl-divider": COLORS.white07,
 
-        // Buttons / controls
-        "btn-bg": "rgba(255,255,255,0.07)",
-        "btn-bg-off": "rgba(255,255,255,0.08)",
-        "btn-icon-on": "#FFFFFF",
-        "btn-secondary": "#2E3037",
-        "end-call": "#EF4444",
+        "btn-bg": COLORS.white07,
+        "btn-bg-off": COLORS.white08,
+        "btn-icon-on": COLORS.white,
+        "btn-secondary": COLORS.btnSecondary,
+        "end-call": COLORS.destructive,
 
-        // Modal
-        modal: "#101113",
+        modal: COLORS.surfaceModal,
 
-        // Misc
-        "header-text": "rgba(255,255,255,0.55)",
-        "header-text-faded": "rgba(255,255,255,0.38)",
-        "warn-yellow": "#FACC15",
+        "header-text": COLORS.white55,
+        "header-text-faded": COLORS.white38,
+        "warn-yellow": COLORS.warningYellow,
 
-        // Primary palette
         "primary-200": COLORS.primary200,
         "primary-750": COLORS.primary750,
         "primary-800": COLORS.primary800,
 
-        // Neutral palette
         "neutral-900": COLORS.neutral900,
         "neutral-800": COLORS.neutral800,
         "neutral-700": COLORS.neutral700,
@@ -40,23 +34,18 @@ module.exports = {
         "neutral-400": COLORS.neutral400,
         "neutral-300": COLORS.neutral300,
 
-        // Slate palette
         "slate-100": COLORS.slate100,
         "slate-200": COLORS.slate200,
 
-        // Yellow palette
         "yellow-800": COLORS.yellow800,
         "yellow-200": COLORS.yellow200,
 
-        // Green palette
         "green-800": COLORS.green800,
         "green-200": COLORS.green200,
 
-        // Sky palette
         "sky-800": COLORS.sky800,
         "sky-200": COLORS.sky200,
 
-        // Red palette
         "red-800": COLORS.red800,
         "red-200": COLORS.red200,
       },

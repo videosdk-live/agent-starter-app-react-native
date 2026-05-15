@@ -2,16 +2,11 @@ import React, { useEffect, useRef } from "react";
 import { View, Animated, Easing } from "react-native";
 import FastImage from "react-native-fast-image";
 import sampleGif from "../assets/sample_gif.gif";
-
-const GLOW_COLOR = {
-  speaking: "rgba(14,165,233,0.45)",
-  thinking: "rgba(124,58,237,0.45)",
-  listening: "rgba(156,163,175,0.35)",
-};
+import { COLORS } from "../lib/colors";
 
 export const MeetingOrb = ({ agentState, size = 280 }) => {
   const key = String(agentState || "").toLowerCase();
-  const color = GLOW_COLOR[key];
+  const color = COLORS.orb[key];
   const glow = useRef(new Animated.Value(0.25)).current;
   const innerSize = Math.round(size * (260 / 280));
 

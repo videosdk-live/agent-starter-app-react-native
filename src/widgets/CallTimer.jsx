@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Text, StyleSheet } from "react-native";
+import { COLORS } from "../lib/colors";
 
 export const CallTimer = ({ startTime }) => {
   const [seconds, setSeconds] = useState(() =>
@@ -9,9 +10,7 @@ export const CallTimer = ({ startTime }) => {
   );
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setSeconds((s) => s + 1);
-    }, 1000);
+    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -19,8 +18,19 @@ export const CallTimer = ({ startTime }) => {
   const s = String(seconds % 60).padStart(2, "0");
 
   return (
-    <Text className="w-[50px] h-5 text-neutral-400 text-sm font-normal font-sans leading-5 text-center tabular-nums">
+    <Text style={styles.text}>
       {m}:{s}
     </Text>
   );
 };
+
+const styles = StyleSheet.create({
+  text: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: "500",
+    fontVariant: ["tabular-nums"],
+    minWidth: 36,
+    textAlign: "center",
+  },
+});

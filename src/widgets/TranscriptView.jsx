@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { ScrollView, View, Text } from "react-native";
+import { COLORS } from "../lib/colors";
 
 export const TranscriptView = ({ messages = [] }) => {
   const scrollRef = useRef(null);
@@ -30,7 +31,10 @@ export const TranscriptView = ({ messages = [] }) => {
               : "?";
           return (
             <View key={msg.id} className="flex-row items-start mb-2.5">
-              <View className="w-7 h-7 rounded-full bg-[#3A3A3C] items-center justify-center">
+              <View
+                className="w-7 h-7 rounded-full items-center justify-center"
+                style={{ backgroundColor: COLORS.surfaceAvatar }}
+              >
                 <Text className="text-white text-xs font-semibold">
                   {initial}
                 </Text>

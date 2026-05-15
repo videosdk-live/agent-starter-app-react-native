@@ -1,32 +1,43 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { STATUS_CONFIGS } from "../lib/statusConfigs";
-
-const Pill = ({ config }) => (
-  <View
-    className="h-5 px-1.5 py-0.5 rounded-[12px] border items-center justify-center"
-    style={{
-      width: config.w,
-      backgroundColor: config.bg,
-      borderColor: config.border,
-    }}
-  >
-    <View className="absolute inset-y-0 left-1.5 justify-center">
-      <View
-        className="w-2 h-2 rounded-full"
-        style={{ backgroundColor: config.dot }}
-      />
-    </View>
-    <Text
-      className="text-xs font-normal font-sans leading-4"
-      style={{ color: config.color }}
-    >
-      {config.text}
-    </Text>
-  </View>
-);
 
 export const AgentStatePill = ({ state }) => {
   const key = String(state || "").toLowerCase();
-  return <Pill config={STATUS_CONFIGS[key] ?? STATUS_CONFIGS.idle} />;
+  const cfg = STATUS_CONFIGS[key] ?? STATUS_CONFIGS.idle;
+
+  return (
+    <View
+      style={[
+        styles.pill,
+        { backgroundColor: cfg.bg, borderColor: cfg.border },
+      ]}
+    >
+      <View style={[styles.dot, { backgroundColor: cfg.dot }]} />
+      <Text style={[styles.label, { color: cfg.color }]}>{cfg.text}</Text>
+    </View>
+  );
 };
+
+const styles = StyleSheet.create({
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 6,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "500",
+    letterSpacing: 0.2,
+  },
+});

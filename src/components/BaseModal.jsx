@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal } from "react-native";
 import { X } from "lucide-react-native";
 import { cn } from "../lib/utils";
 import { buttonShadow } from "../lib/shadows";
+import { COLORS } from "../lib/colors";
 
 const BaseModal = ({
   isOpen,
@@ -27,7 +28,7 @@ const BaseModal = ({
         <View
           className="bg-modal rounded-[24px] w-[350px] min-w-[300px] max-w-full h-[154px] border border-white/5 px-6 py-5 justify-between"
           style={{
-            shadowColor: "#000",
+            shadowColor: COLORS.black,
             shadowOffset: { width: 0, height: 25 },
             shadowOpacity: 0.5,
             shadowRadius: 50,
@@ -44,7 +45,7 @@ const BaseModal = ({
                 className="active:opacity-100 opacity-40"
                 hitSlop={8}
               >
-                <X size={20} color="#FFFFFF" />
+                <X size={20} color={COLORS.white} />
               </Pressable>
             </View>
             <Text className="text-neutral-400 text-xs leading-4 font-normal">

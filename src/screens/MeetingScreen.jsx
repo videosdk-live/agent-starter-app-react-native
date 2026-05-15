@@ -1,28 +1,77 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Pressable, KeyboardAvoidingView, Platform } from "react-native";
-import { SwitchCamera } from "lucide-react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  View,
+  Pressable,
+  Text,
+  StyleSheet,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { SwitchCamera, VideoOff, MonitorUp } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useMeeting,
   useAgentParticipant,
+  useParticipant,
   useMediaDevice,
   switchAudioDevice,
   createCameraVideoTrack,
 } from "@videosdk.live/react-native-sdk";
-import InCallManager from "@videosdk.live/react-native-incallmanager";
 
 import { TopVignette, BottomVignette } from "../widgets/Vignette";
 import { TopHeader } from "../widgets/TopHeader";
 import { MeetingOrb } from "../widgets/MeetingOrb";
 import { AgentTile } from "../widgets/AgentTile";
 import { UserTile } from "../widgets/UserTile";
-import { DraggableTile, TILE_CORNERS } from "../widgets/DraggableTile";
 import { TranscriptView } from "../widgets/TranscriptView";
 import { BottomBar } from "../widgets/BottomBar";
 import { SpeakerBottomSheet } from "../widgets/SpeakerBottomSheet";
+import { COLORS } from "../lib/colors";
+
+const CamOffPlaceholder = () => (
+  <View style={styles.camOff}>
+    <VideoOff size={24} color={COLORS.white38} />
+  </View>
+);
+
+const ScreenShareOverlay = ({ onStop }) => (
+  <View style={styles.shareOverlay}>
+    <View style={styles.shareIconWrap}>
+      <MonitorUp size={36} color={COLORS.white} />
+    </View>
+    <Text style={styles.shareText}>
+      You're sharing your screen with everyone
+    </Text>
+    <Pressable onPress={onStop} style={styles.stopBtn}>
+      <MonitorUp size={16} color={COLORS.white90} />
+      <Text style={styles.stopBtnText}>Stop Sharing</Text>
+    </Pressable>
+  </View>
+);
+
+const CamFlipBtn = ({ onPress, top, right, left }) => (
+  <Pressable
+    onPress={onPress}
+    style={[styles.camFlip, { top, right, left }]}
+    hitSlop={8}
+  >
+    <SwitchCamera size={16} color={COLORS.white} />
+  </Pressable>
+);
 
 export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   const startTimeRef = useRef(new Date());
+
+  const { width: screenW } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const bigW = screenW - 32;
+  const bigH = bigW * (570 / 370);
+  const bigTop = insets.top + 88;
+  const pipW = screenW * 0.3;
+  const pipH = pipW * 1.45;
 
   const [agentParticipantId, setAgentParticipantId] = useState(null);
   const [agentState, setAgentState] = useState("idle");
@@ -30,34 +79,52 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   const [speakerSheetOpen, setSpeakerSheetOpen] = useState(false);
   const [speakers, setSpeakers] = useState([]);
   const [selectedSpeaker, setSelectedSpeaker] = useState(null);
-  const [bigIsAgent, setBigIsAgent] = useState(false);
-  const [smallCorner, setSmallCorner] = useState(1);
+  const [isSwapped, setIsSwapped] = useState(false);
   const facingModeRef = useRef("front");
 
-  const { join, leave, participants, localParticipant, changeWebcam } =
-    useMeeting({
-      onMeetingJoined: () => {
-        setAgentState("connected");
-        try {
-          InCallManager.start({ media: "audio" });
-          InCallManager.setForceSpeakerphoneOn(true);
-        } catch (e) {}
-      },
-      onMeetingLeft: () => {
-        try {
-          InCallManager.stop();
-        } catch (e) {}
-        onLeave?.();
-      },
-      onParticipantJoined: (p) => {
-        if (p?.isAgent) setAgentParticipantId(p.id);
-      },
-      onParticipantLeft: (p) => {
-        if (p?.isAgent) onAgentLeft?.();
-      },
-    });
+  const {
+    join,
+    leave,
+    participants,
+    localParticipant,
+    changeWebcam,
+    disableScreenShare,
+    localScreenShareOn,
+  } = useMeeting({
+    onMeetingJoined: () => {
+      setAgentState("connected");
+    },
+    onMeetingLeft: () => {
+      onLeave?.();
+    },
+    onParticipantJoined: (p) => {
+      if (p?.isAgent) setAgentParticipantId(p.id);
+    },
+    onParticipantLeft: (p) => {
+      if (p?.isAgent) onAgentLeft?.();
+    },
+    onError: (err) => {
+      const name = err?.code ?? "Error";
+      const message = err?.message ?? "Something went wrong";
+      Alert.alert(String(name), String(message));
+    },
+  });
 
-  const { getAudioDeviceList } = useMediaDevice();
+  const { getAudioDeviceList } = useMediaDevice({
+    onAudioDeviceChanged: async () => {
+      try {
+        const list = (await getAudioDeviceList()) ?? [];
+        setSpeakers(list);
+      } catch (e) {
+        console.warn("onAudioDeviceChanged failed", e);
+      }
+    },
+  });
+
+  const { webcamOn: agentWebcamOn } = useParticipant(agentParticipantId ?? "");
+  const { webcamOn: localWebcamOn } = useParticipant(
+    localParticipant?.id ?? "",
+  );
 
   const joined = useRef(false);
   useEffect(() => {
@@ -79,20 +146,14 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
 
   useEffect(() => {
     if (!localParticipant?.id) return;
-    const id = setTimeout(() => {
-      if (participants.size > 2) {
-        leave();
-        onCapacityReached?.();
-      }
-    }, 2500);
-    return () => clearTimeout(id);
-  }, [localParticipant?.id]);
+    if (participants.size > 2) {
+      leave();
+      onCapacityReached?.();
+    }
+  }, [participants.size, localParticipant?.id]);
 
   useAgentParticipant(agentParticipantId, {
-    onAgentStateChanged: (state) => {
-      console.log("[MeetingScreen] agent state changed:", state);
-      setAgentState(state);
-    },
+    onAgentStateChanged: (data) => setAgentState(data?.state ?? data),
     onAgentTranscriptionReceived: (data) => {
       const text = data?.segment?.text;
       if (!text) return;
@@ -101,27 +162,22 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
           ...prev,
           {
             id:
-              data?.segment?.timestamp ||
+              data?.segment?.timestamp ??
               `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            senderName: data?.participant?.displayName || "Agent",
+            senderName: data?.participant?.displayName ?? "Agent",
             text,
           },
         ];
-        return next.slice(-10);
+        return next.slice(-20);
       });
     },
   });
 
   const refreshSpeakers = useCallback(async () => {
     try {
-      const list = (await getAudioDeviceList()) || [];
-      const devices = list.map((d) => ({
-        deviceId: d.deviceId,
-      }));
-      setSpeakers(devices);
-      if (!selectedSpeaker && devices[0]) {
-        setSelectedSpeaker(devices[0].deviceId);
-      }
+      const list = (await getAudioDeviceList()) ?? [];
+      setSpeakers(list);
+      if (!selectedSpeaker && list[0]) setSelectedSpeaker(list[0].label);
     } catch (e) {
       console.warn("getAudioDeviceList failed", e);
     }
@@ -132,12 +188,12 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     setSpeakerSheetOpen(true);
   };
 
-  const handleSelectSpeaker = (deviceId) => {
-    setSelectedSpeaker(deviceId);
+  const handleSelectSpeaker = (label) => {
+    setSelectedSpeaker(label);
     try {
-      switchAudioDevice(deviceId);
+      switchAudioDevice(label);
     } catch (e) {
-      console.warn("switchAudioDevice failed", e);
+      console.warn(e);
     }
   };
 
@@ -148,100 +204,166 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     onLeave?.();
   };
 
-  const swapTiles = useCallback(() => setBigIsAgent((v) => !v), []);
-
   const handleSwitchCamera = useCallback(async () => {
-    console.log("[MeetingScreen] switch camera tapped");
     try {
       const next = facingModeRef.current === "front" ? "environment" : "front";
       facingModeRef.current = next;
-      console.log("[MeetingScreen] creating track with facingMode:", next);
       const track = await createCameraVideoTrack({ facingMode: next });
-      console.log("[MeetingScreen] track created:", track);
       changeWebcam(track);
-      console.log("[MeetingScreen] changeWebcam invoked");
     } catch (e) {
-      console.warn("[MeetingScreen] switch camera failed", e);
+      console.warn("switch camera failed", e);
     }
   }, [changeWebcam]);
 
-  const bothJoined = !!agentParticipantId && !!localParticipant?.id;
+  const isScreenSharing = !!localScreenShareOn;
+  const bothCamsOff = !agentWebcamOn && !localWebcamOn;
+  const showVideoUI =
+    !!localParticipant?.id && (!bothCamsOff || isScreenSharing);
+  const effectivelySwapped = isSwapped && !!localWebcamOn;
+  const canSwap = !isScreenSharing && (isSwapped || !!localWebcamOn);
+
+  const swapTiles = useCallback(() => {
+    if (canSwap) setIsSwapped((v) => !v);
+  }, [canSwap]);
+
+  const shouldShowPip = isScreenSharing
+    ? !!agentWebcamOn || !!localWebcamOn
+    : !!localWebcamOn;
+
+  const pipShowCamFlip =
+    !effectivelySwapped &&
+    !!localWebcamOn &&
+    (!isScreenSharing || !agentWebcamOn);
+  const bigShowCamFlip =
+    effectivelySwapped && !!localWebcamOn && !isScreenSharing;
+
+  const pipDuringShare = agentWebcamOn ? (
+    <AgentTile
+      participantId={agentParticipantId}
+      agentState={agentState}
+      orbSize={50}
+      borderRadius={13}
+    />
+  ) : localWebcamOn ? (
+    <UserTile
+      participantId={localParticipant?.id}
+      avatarSize={32}
+      borderRadius={13}
+    />
+  ) : (
+    <CamOffPlaceholder />
+  );
+
+  const bigFeed = isScreenSharing ? (
+    <ScreenShareOverlay onStop={() => disableScreenShare()} />
+  ) : effectivelySwapped ? (
+    <UserTile participantId={localParticipant?.id} borderRadius={16} />
+  ) : (
+    <AgentTile
+      participantId={agentParticipantId}
+      agentState={agentState}
+      orbSize={220}
+      borderRadius={16}
+    />
+  );
+
+  const pipContent = isScreenSharing ? (
+    pipDuringShare
+  ) : effectivelySwapped ? (
+    <AgentTile
+      participantId={agentParticipantId}
+      agentState={agentState}
+      orbSize={50}
+      borderRadius={13}
+    />
+  ) : (
+    <UserTile
+      participantId={localParticipant?.id}
+      avatarSize={32}
+      borderRadius={13}
+    />
+  );
 
   return (
-    <View className="flex-1 bg-fl-bg">
-      <TopVignette height={200} />
-      <BottomVignette height={260} opacity={0.7} />
+    <View style={styles.root}>
+      {!showVideoUI && <TopVignette height={200} />}
+      <BottomVignette
+        height={showVideoUI ? 280 : 260}
+        opacity={showVideoUI ? 0.85 : 0.7}
+      />
 
-      {bothJoined ? (
-        <>
-          <View className="absolute top-[130px] left-4">
-            {bigIsAgent ? (
-              <AgentTile
-                participantId={agentParticipantId}
-                agentState={agentState}
-                variant="big"
-              />
-            ) : (
-              <UserTile participantId={localParticipant.id} variant="big" />
-            )}
-          </View>
+      {showVideoUI && (
+        <View
+          style={[
+            styles.bigTile,
+            { top: bigTop, width: bigW, height: bigH, left: 16 },
+          ]}
+        >
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={canSwap ? swapTiles : undefined}
+          >
+            {bigFeed}
+          </Pressable>
 
-          {smallCorner !== 1 && (
-            <Pressable
-              onPress={handleSwitchCamera}
-              style={{
-                position: "absolute",
-                left: TILE_CORNERS[1].x,
-                top: TILE_CORNERS[1].y,
-              }}
-              className="w-[100px] h-[150px] rounded-[12px] border-2 border-dashed border-white/25 bg-black/40 items-center justify-center active:opacity-70"
+          {shouldShowPip && (
+            <View
+              style={[
+                styles.pip,
+                {
+                  width: pipW,
+                  height: pipH,
+                  top: 10,
+                  ...(effectivelySwapped ? { left: 10 } : { right: 10 }),
+                },
+              ]}
             >
-              <SwitchCamera
-                size={28}
-                color="rgba(255,255,255,0.7)"
-                strokeWidth={2}
-              />
-            </Pressable>
+              <Pressable
+                style={{ flex: 1 }}
+                onPress={canSwap ? swapTiles : undefined}
+              >
+                {pipContent}
+              </Pressable>
+
+              {pipShowCamFlip && (
+                <CamFlipBtn onPress={handleSwitchCamera} top={6} right={6} />
+              )}
+            </View>
           )}
 
-          <DraggableTile
-            initialCorner={1}
-            onCornerChange={setSmallCorner}
-            onTap={swapTiles}
-          >
-            {bigIsAgent ? (
-              <UserTile participantId={localParticipant.id} variant="small" />
-            ) : (
-              <AgentTile
-                participantId={agentParticipantId}
-                agentState={agentState}
-                variant="small"
-              />
-            )}
-          </DraggableTile>
-        </>
-      ) : (
-        <View className="absolute inset-0 items-center justify-center">
+          {bigShowCamFlip && (
+            <CamFlipBtn onPress={handleSwitchCamera} top={10} right={10} />
+          )}
+        </View>
+      )}
+
+      {!showVideoUI && (
+        <View style={styles.orbCenter}>
           <MeetingOrb agentState={agentState} />
         </View>
       )}
 
       <KeyboardAvoidingView
-        className="flex-1"
+        style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
+        <View
+          style={[
+            styles.flex,
+            { paddingTop: insets.top, paddingBottom: insets.bottom },
+          ]}
+        >
           <TopHeader
             variant="meeting"
             agentState={agentState}
             onSpeakerPress={handleSpeakerPress}
           />
 
-          <View className="flex-1" />
+          <View style={styles.flex} />
 
           <View>
             {transcripts.length > 0 && (
-              <View className="mb-2">
+              <View style={styles.transcriptWrap}>
                 <TranscriptView messages={transcripts} />
               </View>
             )}
@@ -250,7 +372,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
               onEndCall={handleEndCall}
             />
           </View>
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
 
       <SpeakerBottomSheet
@@ -263,3 +385,94 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: COLORS.black,
+  },
+  flex: {
+    flex: 1,
+  },
+  bigTile: {
+    position: "absolute",
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: COLORS.black,
+  },
+  pip: {
+    position: "absolute",
+    borderRadius: 14,
+    overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: COLORS.white25,
+    shadowColor: COLORS.black,
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  camFlip: {
+    position: "absolute",
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: COLORS.black55,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  orbCenter: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  camOff: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shareOverlay: {
+    flex: 1,
+    backgroundColor: COLORS.black,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  shareIconWrap: {
+    padding: 16,
+    borderRadius: 999,
+    backgroundColor: COLORS.white08,
+    marginBottom: 16,
+  },
+  shareText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "400",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  stopBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.white10,
+    borderWidth: 1,
+    borderColor: COLORS.white20,
+  },
+  stopBtnText: {
+    color: COLORS.white90,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  transcriptWrap: {
+    marginBottom: 8,
+  },
+});

@@ -11,6 +11,7 @@ import BaseModal from "./src/components/BaseModal";
 import CapacityModal from "./src/components/CapacityModal";
 import JoinErrorModal from "./src/components/JoinErrorModal";
 import { useMediaPermissions } from "./src/hooks/useMediaPermissions";
+import { COLORS } from "./src/lib/colors";
 
 export default function App() {
   const [status, setStatus] = useState("idle");
@@ -82,10 +83,10 @@ export default function App() {
   return (
     <GestureHandlerRootView
       className="flex-1 bg-fl-bg"
-      style={{ flex: 1, backgroundColor: "#000" }}
+      style={{ flex: 1, backgroundColor: COLORS.black }}
     >
-      <SafeAreaProvider style={{ flex: 1, backgroundColor: "#000" }}>
-        <StatusBar barStyle="light-content" backgroundColor="#000" />
+      <SafeAreaProvider style={{ flex: 1, backgroundColor: COLORS.black }}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.black} />
 
         {status !== "connected" && (
           <JoinScreen
@@ -98,7 +99,7 @@ export default function App() {
         {status === "connected" && AUTH_TOKEN && meetingId && (
           <MeetingProvider
             config={{
-              meetingId:"e7mz-dc2n-4x06",
+              meetingId,
               micEnabled: startMicEnabled,
               webcamEnabled: false,
               name: "Guest",

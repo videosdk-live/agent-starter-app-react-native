@@ -1,67 +1,19 @@
-import { COLORS, withAlpha } from "./colors";
+import { COLORS } from "./colors";
+
+const pill = (text, key) => ({
+  text,
+  bg: COLORS.status[key].bg,
+  border: COLORS.status[key].border,
+  color: COLORS.status[key].text,
+  dot: COLORS.status[key].dot,
+});
 
 export const STATUS_CONFIGS = {
-  connecting: {
-    w: 105,
-    h: 20,
-    text: "Connecting...",
-    bg: withAlpha(COLORS.yellow800, 0.1),
-    border: withAlpha(COLORS.yellow800, 0.5),
-    color: COLORS.yellow200,
-    dot: withAlpha(COLORS.yellow800, 0.2),
-  },
-  connected: {
-    w: 87,
-    h: 20,
-    text: "Connected",
-    bg: withAlpha(COLORS.green800, 0.1),
-    border: withAlpha(COLORS.green800, 0.5),
-    color: COLORS.green200,
-    dot: withAlpha(COLORS.green800, 0.2),
-  },
-  listening: {
-    w: 76,
-    h: 20,
-    text: "Listening",
-    bg: "transparent",
-    border: COLORS.neutral800,
-    color: COLORS.neutral300,
-    dot: withAlpha(COLORS.neutral800, 0.2),
-  },
-  thinking: {
-    w: 73,
-    h: 20,
-    text: "Thinking",
-    bg: withAlpha(COLORS.primary800, 0.1),
-    border: withAlpha(COLORS.primary800, 0.5),
-    color: COLORS.primary200,
-    dot: withAlpha(COLORS.primary750, 0.2),
-  },
-  speaking: {
-    w: 77,
-    h: 20,
-    text: "Speaking",
-    bg: withAlpha(COLORS.sky800, 0.1),
-    border: withAlpha(COLORS.sky800, 0.5),
-    color: COLORS.sky200,
-    dot: withAlpha(COLORS.sky800, 0.2),
-  },
-  disconnected: {
-    w: 103,
-    h: 20,
-    text: "Disconnected",
-    bg: withAlpha(COLORS.red800, 0.1),
-    border: withAlpha(COLORS.red800, 0.5),
-    color: COLORS.red200,
-    dot: withAlpha(COLORS.red800, 0.2),
-  },
-  idle: {
-    w: 51,
-    h: 20,
-    text: "Idle",
-    bg: withAlpha(COLORS.slate100, 0.05),
-    border: withAlpha(COLORS.slate100, 0.1),
-    color: COLORS.slate200,
-    dot: withAlpha(COLORS.slate100, 0.2),
-  },
+  connecting: pill("Connecting...", "connecting"),
+  connected: pill("Connected", "connected"),
+  listening: pill("Listening", "listening"),
+  thinking: pill("Thinking", "thinking"),
+  speaking: pill("Speaking", "speaking"),
+  disconnected: pill("Disconnected", "disconnected"),
+  idle: pill("Idle", "idle"),
 };
