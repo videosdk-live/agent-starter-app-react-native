@@ -67,7 +67,7 @@ const BaseModal = ({
                   "h-8 rounded-button items-center justify-center px-3 py-1.5",
                   action.variant === "primary"
                     ? "bg-primary-200"
-                    : "bg-btn-secondary",
+                    : "bg-btn-secondary"
                 )}
               >
                 <Text
@@ -75,7 +75,7 @@ const BaseModal = ({
                     "text-sm font-medium font-sans leading-5",
                     action.variant === "primary"
                       ? "text-primary-800"
-                      : "text-white",
+                      : "text-white"
                   )}
                 >
                   {action.label}

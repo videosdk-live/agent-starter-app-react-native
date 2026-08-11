@@ -54,7 +54,11 @@ export const SpeakerBottomSheet = ({
                       </Text>
                     </View>
                     {isSelected && (
-                      <Check size={18} color={COLORS.accentViolet} strokeWidth={2.5} />
+                      <Check
+                        size={18}
+                        color={COLORS.accentViolet}
+                        strokeWidth={2.5}
+                      />
                     )}
                   </Pressable>
                 );

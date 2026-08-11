@@ -6,7 +6,7 @@ export const CallTimer = ({ startTime }) => {
   const [seconds, setSeconds] = useState(() =>
     startTime
       ? Math.max(0, Math.floor((Date.now() - startTime.getTime()) / 1000))
-      : 0,
+      : 0
   );
 
   useEffect(() => {

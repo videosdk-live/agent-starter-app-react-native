@@ -52,7 +52,7 @@ export const useMediaPermissions = () => {
         return false;
       }
     },
-    [sdkRequestPermission, refresh],
+    [sdkRequestPermission, refresh]
   );
 
   return {
