@@ -191,7 +191,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     try {
       const list = (await getAudioDeviceList()) ?? [];
       setSpeakers(list);
-      if (!selectedSpeaker && list[0]) setSelectedSpeaker(list[0].label);
+      if (!selectedSpeaker && list[0]) setSelectedSpeaker(list[0].deviceId);
     } catch (e) {
       console.warn("getAudioDeviceList failed", e);
     }
@@ -202,12 +202,14 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     setSpeakerSheetOpen(true);
   };
 
-  const handleSelectSpeaker = async (label) => {
-    setSelectedSpeaker(label);
+  const handleSelectSpeaker = async (deviceId) => {
+    const previous = selectedSpeaker;
+    setSelectedSpeaker(deviceId);
     try {
-      await switchAudioDevice(label);
+      await switchAudioDevice(deviceId);
     } catch (e) {
-      console.warn(e);
+      setSelectedSpeaker(previous);
+      console.warn("switchAudioDevice failed", e);
     }
   };
 
@@ -216,6 +218,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
       await leave();
     } catch (e) {
       console.warn("leave failed", e);
+      onLeave?.();
     }
   };
 

@@ -32,12 +32,12 @@ export const SpeakerBottomSheet = ({
               </View>
 
               {devices.map((d) => {
-                const isSelected = d.label === selectedDeviceId;
+                const isSelected = d.deviceId === selectedDeviceId;
                 return (
                   <Pressable
-                    key={d.label ?? d.deviceId}
+                    key={d.deviceId ?? d.label}
                     onPress={() => {
-                      onSelect?.(d.label);
+                      onSelect?.(d.deviceId);
                       onClose();
                     }}
                     className="flex-row items-center px-4 py-3.5 active:bg-white/5"

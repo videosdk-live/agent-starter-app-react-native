@@ -97,6 +97,7 @@ export const BottomBar = ({ startTime, onEndCall }) => {
   const toggleChat = () => setChatOpen((v) => !v);
 
   const handleEndCall = () => {
+    // Close chat first so ChatInput unmounts and usePubSub unsubscribes while still joined — otherwise the SDK throws "unsubscribe without join".
     setChatOpen(false);
     onEndCall?.();
   };
