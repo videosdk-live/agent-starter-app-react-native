@@ -34,7 +34,7 @@ export const MeetingOrb = ({ agentState, size = 280 }) => {
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
-      ]),
+      ])
     ).start();
   }, [color, glow]);
 

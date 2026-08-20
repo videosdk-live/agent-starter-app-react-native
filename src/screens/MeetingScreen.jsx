@@ -121,16 +121,45 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     },
   });
 
-  const { webcamOn: agentWebcamOn } = useParticipant(agentParticipantId ?? "");
   const { webcamOn: localWebcamOn } = useParticipant(
-    localParticipant?.id ?? "",
+    localParticipant?.id ?? ""
+  );
+
+  const { webcamOn: agentWebcamOn } = useAgentParticipant(
+    agentParticipantId ?? "",
+    {
+      onAgentStateChanged: (data) => setAgentState(data?.state ?? data),
+      onAgentTranscriptionReceived: (data) => {
+        const text = data?.segment?.text;
+        if (!text) return;
+        setTranscripts((prev) => {
+          const next = [
+            ...prev,
+            {
+              id:
+                data?.segment?.timestamp ??
+                `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              senderName: data?.participant?.displayName ?? "Agent",
+              text,
+            },
+          ];
+          return next.slice(-20);
+        });
+      },
+    }
   );
 
   const joined = useRef(false);
   useEffect(() => {
     if (joined.current) return;
     joined.current = true;
-    const t = setTimeout(() => join(), 800);
+    const t = setTimeout(async () => {
+      try {
+        await join();
+      } catch (e) {
+        console.warn("join failed", e);
+      }
+    }, 800);
     return () => clearTimeout(t);
   }, []);
 
@@ -147,37 +176,22 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   useEffect(() => {
     if (!localParticipant?.id) return;
     if (participants.size > 2) {
-      leave();
-      onCapacityReached?.();
+      (async () => {
+        try {
+          await leave();
+        } catch (e) {
+          console.warn("leave failed", e);
+        }
+        onCapacityReached?.();
+      })();
     }
   }, [participants.size, localParticipant?.id]);
-
-  useAgentParticipant(agentParticipantId, {
-    onAgentStateChanged: (data) => setAgentState(data?.state ?? data),
-    onAgentTranscriptionReceived: (data) => {
-      const text = data?.segment?.text;
-      if (!text) return;
-      setTranscripts((prev) => {
-        const next = [
-          ...prev,
-          {
-            id:
-              data?.segment?.timestamp ??
-              `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            senderName: data?.participant?.displayName ?? "Agent",
-            text,
-          },
-        ];
-        return next.slice(-20);
-      });
-    },
-  });
 
   const refreshSpeakers = useCallback(async () => {
     try {
       const list = (await getAudioDeviceList()) ?? [];
       setSpeakers(list);
-      if (!selectedSpeaker && list[0]) setSelectedSpeaker(list[0].label);
+      if (!selectedSpeaker && list[0]) setSelectedSpeaker(list[0].deviceId);
     } catch (e) {
       console.warn("getAudioDeviceList failed", e);
     }
@@ -188,20 +202,24 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     setSpeakerSheetOpen(true);
   };
 
-  const handleSelectSpeaker = (label) => {
-    setSelectedSpeaker(label);
+  const handleSelectSpeaker = async (deviceId) => {
+    const previous = selectedSpeaker;
+    setSelectedSpeaker(deviceId);
     try {
-      switchAudioDevice(label);
+      await switchAudioDevice(deviceId);
     } catch (e) {
-      console.warn(e);
+      setSelectedSpeaker(previous);
+      console.warn("switchAudioDevice failed", e);
     }
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
     try {
-      leave();
-    } catch (e) {}
-    onLeave?.();
+      await leave();
+    } catch (e) {
+      console.warn("leave failed", e);
+      onLeave?.();
+    }
   };
 
   const handleSwitchCamera = useCallback(async () => {
@@ -209,7 +227,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
       const next = facingModeRef.current === "front" ? "environment" : "front";
       facingModeRef.current = next;
       const track = await createCameraVideoTrack({ facingMode: next });
-      changeWebcam(track);
+      await changeWebcam(track);
     } catch (e) {
       console.warn("switch camera failed", e);
     }
@@ -254,8 +272,16 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     <CamOffPlaceholder />
   );
 
+  const handleStopScreenShare = useCallback(async () => {
+    try {
+      await disableScreenShare();
+    } catch (e) {
+      console.warn("disableScreenShare failed", e);
+    }
+  }, [disableScreenShare]);
+
   const bigFeed = isScreenSharing ? (
-    <ScreenShareOverlay onStop={() => disableScreenShare()} />
+    <ScreenShareOverlay onStop={handleStopScreenShare} />
   ) : effectivelySwapped ? (
     <UserTile participantId={localParticipant?.id} borderRadius={16} />
   ) : (

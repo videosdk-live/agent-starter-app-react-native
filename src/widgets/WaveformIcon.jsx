@@ -45,7 +45,7 @@ export const WaveformIcon = ({ color = COLORS.brandPurple, size = 20 }) => {
         duration: 900,
         easing: Easing.inOut(Easing.sin),
         useNativeDriver: false,
-      }),
+      })
     );
     loop.start();
     return () => loop.stop();

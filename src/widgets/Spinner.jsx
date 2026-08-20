@@ -18,7 +18,7 @@ export const Spinner = ({
         duration,
         easing: Easing.linear,
         useNativeDriver: true,
-      }),
+      })
     );
     loop.start();
     return () => loop.stop();
@@ -26,7 +26,7 @@ export const Spinner = ({
 
   const inputRange = Array.from({ length: count + 1 }, (_, i) => i / count);
   const baseOutput = Array.from({ length: count }, (_, i) =>
-    Math.max(1 - i * (1 / (count - 1)), 0),
+    Math.max(1 - i * (1 / (count - 1)), 0)
   );
 
   const barWidth = size / 10;

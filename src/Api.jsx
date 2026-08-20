@@ -45,7 +45,7 @@ export const verifyMeeting = async (meetingId) => {
           Authorization: AUTH_TOKEN,
           "Content-Type": "application/json",
         },
-      },
+      }
     );
 
     if (!response.ok) {

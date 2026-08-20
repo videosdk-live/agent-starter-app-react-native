@@ -56,7 +56,7 @@ export const SpeakerIndicator = ({ isSpeaking = false }) => {
         duration: 900,
         easing: Easing.inOut(Easing.sin),
         useNativeDriver: false,
-      }),
+      })
     );
     loop.start();
     return () => loop.stop();

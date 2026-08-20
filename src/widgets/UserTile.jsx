@@ -13,7 +13,7 @@ export const UserTile = ({
   borderRadius = 0,
 }) => {
   const { webcamStream, webcamOn, displayName } = useParticipant(
-    participantId ?? "",
+    participantId ?? ""
   );
   const hasVideo = webcamOn && webcamStream?.track;
 

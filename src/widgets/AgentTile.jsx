@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import {
-  useParticipant,
+  useAgentParticipant,
   RTCView,
   MediaStream,
 } from "@videosdk.live/react-native-sdk";
@@ -14,7 +14,7 @@ export const AgentTile = ({
   orbSize = 220,
   borderRadius = 0,
 }) => {
-  const { webcamStream, webcamOn } = useParticipant(participantId ?? "");
+  const { webcamStream, webcamOn } = useAgentParticipant(participantId ?? "");
   const hasVideo = webcamOn && webcamStream?.track;
 
   return (
