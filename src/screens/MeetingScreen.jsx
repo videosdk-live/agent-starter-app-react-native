@@ -12,11 +12,10 @@ import {
 import { SwitchCamera, VideoOff, MonitorUp } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  useMeeting,
+  useRoom,
   useAgentParticipant,
   useParticipant,
   useMediaDevice,
-  switchAudioDevice,
   createCameraVideoTrack,
 } from "@videosdk.live/react-native-sdk";
 
@@ -87,14 +86,15 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     leave,
     participants,
     localParticipant,
-    changeWebcam,
+    changeCam,
     disableScreenShare,
-    localScreenShareOn,
-  } = useMeeting({
-    onMeetingJoined: () => {
+    isScreenSharing,
+    setAudioDevice,
+  } = useRoom({
+    onRoomJoined: () => {
       setAgentState("connected");
     },
-    onMeetingLeft: () => {
+    onRoomLeft: () => {
       onLeave?.();
     },
     onParticipantJoined: (p) => {
@@ -110,10 +110,10 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     },
   });
 
-  const { getAudioDeviceList } = useMediaDevice({
+  const { getMics } = useMediaDevice({
     onAudioDeviceChanged: async () => {
       try {
-        const list = (await getAudioDeviceList()) ?? [];
+        const list = (await getMics()) ?? [];
         setSpeakers(list);
       } catch (e) {
         console.warn("onAudioDeviceChanged failed", e);
@@ -121,7 +121,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     },
   });
 
-  const { webcamOn: localWebcamOn } = useParticipant(
+  const { webcamOn: isCamEnabled } = useParticipant(
     localParticipant?.id ?? ""
   );
 
@@ -189,13 +189,13 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
 
   const refreshSpeakers = useCallback(async () => {
     try {
-      const list = (await getAudioDeviceList()) ?? [];
+      const list = (await getMics()) ?? [];
       setSpeakers(list);
       if (!selectedSpeaker && list[0]) setSelectedSpeaker(list[0].deviceId);
     } catch (e) {
-      console.warn("getAudioDeviceList failed", e);
+      console.warn("getMics failed", e);
     }
-  }, [getAudioDeviceList, selectedSpeaker]);
+  }, [getMics, selectedSpeaker]);
 
   const handleSpeakerPress = async () => {
     await refreshSpeakers();
@@ -206,10 +206,12 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     const previous = selectedSpeaker;
     setSelectedSpeaker(deviceId);
     try {
-      await switchAudioDevice(deviceId);
+      // setAudioDevice takes the device from getMics()
+      const device = speakers.find((speaker) => speaker.deviceId === deviceId);
+      await setAudioDevice(device ?? deviceId);
     } catch (e) {
       setSelectedSpeaker(previous);
-      console.warn("switchAudioDevice failed", e);
+      console.warn("setAudioDevice failed", e);
     }
   };
 
@@ -224,36 +226,35 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
 
   const handleSwitchCamera = useCallback(async () => {
     try {
-      const next = facingModeRef.current === "front" ? "environment" : "front";
+      const next = facingModeRef.current === "front" ? "back" : "front";
       facingModeRef.current = next;
       const track = await createCameraVideoTrack({ facingMode: next });
-      await changeWebcam(track);
+      await changeCam(track);
     } catch (e) {
       console.warn("switch camera failed", e);
     }
-  }, [changeWebcam]);
+  }, [changeCam]);
 
-  const isScreenSharing = !!localScreenShareOn;
-  const bothCamsOff = !agentWebcamOn && !localWebcamOn;
+  const bothCamsOff = !agentWebcamOn && !isCamEnabled;
   const showVideoUI =
     !!localParticipant?.id && (!bothCamsOff || isScreenSharing);
-  const effectivelySwapped = isSwapped && !!localWebcamOn;
-  const canSwap = !isScreenSharing && (isSwapped || !!localWebcamOn);
+  const effectivelySwapped = isSwapped && !!isCamEnabled;
+  const canSwap = !isScreenSharing && (isSwapped || !!isCamEnabled);
 
   const swapTiles = useCallback(() => {
     if (canSwap) setIsSwapped((v) => !v);
   }, [canSwap]);
 
   const shouldShowPip = isScreenSharing
-    ? !!agentWebcamOn || !!localWebcamOn
-    : !!localWebcamOn;
+    ? !!agentWebcamOn || !!isCamEnabled
+    : !!isCamEnabled;
 
   const pipShowCamFlip =
     !effectivelySwapped &&
-    !!localWebcamOn &&
+    !!isCamEnabled &&
     (!isScreenSharing || !agentWebcamOn);
   const bigShowCamFlip =
-    effectivelySwapped && !!localWebcamOn && !isScreenSharing;
+    effectivelySwapped && !!isCamEnabled && !isScreenSharing;
 
   const pipDuringShare = agentWebcamOn ? (
     <AgentTile
@@ -262,7 +263,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
       orbSize={50}
       borderRadius={13}
     />
-  ) : localWebcamOn ? (
+  ) : isCamEnabled ? (
     <UserTile
       participantId={localParticipant?.id}
       avatarSize={32}

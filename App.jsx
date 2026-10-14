@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { MeetingProvider } from "@videosdk.live/react-native-sdk";
+import { RoomProvider } from "@videosdk.live/react-native-sdk";
 import Config from "react-native-config";
 import { JoinScreen } from "./src/screens/JoinScreen";
 import { MeetingScreen } from "./src/screens/MeetingScreen";
@@ -97,12 +97,12 @@ export default function App() {
         )}
 
         {status === "connected" && AUTH_TOKEN && meetingId && (
-          <MeetingProvider
+          <RoomProvider
             config={{
-              meetingId,
+              roomId: meetingId,
               micEnabled: startMicEnabled,
-              webcamEnabled: false,
-              name: "Guest",
+              camEnabled: false,
+              participantName: "Guest",
             }}
             token={AUTH_TOKEN}
           >
@@ -111,7 +111,7 @@ export default function App() {
               onAgentLeft={handleAgentLeft}
               onCapacityReached={handleCapacityReached}
             />
-          </MeetingProvider>
+          </RoomProvider>
         )}
 
         <CapacityModal isOpen={showCapacityModal} onClose={closeCapacity} />

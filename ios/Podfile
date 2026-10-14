@@ -5,7 +5,7 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, min_ios_version_supported
+platform :ios, '18.0'
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -22,8 +22,7 @@ target 'MyApp' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
-
- pod 'react-native-webrtc', :path => '../node_modules/@videosdk.live/react-native-webrtc'
+  pod 'VideoSDKRTC', :podspec => '../node_modules/@videosdk.live/react-native-sdk/ios/VideoSDKRTC.podspec'
 
   post_install do |installer|
     # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
@@ -33,6 +32,12 @@ target 'MyApp' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # Xcode 26+ refuses pods that target iOS older than 15; match the app's 18.0
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'
+      end
+    end
 
     # Xcode 26 Clang has stricter consteval enforcement that breaks fmt 11.x.
     # Building fmt in C++17 mode prevents consteval from being enabled.

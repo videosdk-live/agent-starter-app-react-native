@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Platform } from "react-native";
-import { useMeeting } from "@videosdk.live/react-native-sdk";
-import VideosdkRPK from "../../VideosdkRPK";
+import React, { useState } from "react";
+import { View, Text, Pressable } from "react-native";
+import {
+  createScreenShareVideoTrack,
+  useRoom,
+} from "@videosdk.live/react-native-sdk";
 import {
   Mic,
   MicOff,
@@ -23,12 +25,12 @@ export const BottomBar = ({ startTime, onEndCall }) => {
   const {
     localParticipant,
     toggleMic,
-    toggleWebcam,
+    toggleCam,
     enableScreenShare,
     disableScreenShare,
     activeSpeakerId,
-    localScreenShareOn,
-  } = useMeeting();
+    isScreenSharing,
+  } = useRoom();
 
   const { audioPermission, videoPermission, micDecline, camDecline } =
     useMediaPermissions();
@@ -39,20 +41,7 @@ export const BottomBar = ({ startTime, onEndCall }) => {
   const micOn = localParticipant?.micOn ?? false;
   const camOn = localParticipant?.webcamOn ?? false;
   const isLocalSpeaker = micOn && activeSpeakerId === localParticipant?.id;
-  const screenShareOn = !!localScreenShareOn;
-
-  useEffect(() => {
-    if (Platform.OS !== "ios") return;
-    const sub = VideosdkRPK.addListener("onScreenShare", async (event) => {
-      try {
-        if (event === "START_BROADCAST") await enableScreenShare();
-        else if (event === "STOP_BROADCAST") await disableScreenShare();
-      } catch (e) {
-        console.warn("screen share toggle failed", e);
-      }
-    });
-    return () => sub.remove();
-  }, [enableScreenShare, disableScreenShare]);
+  const screenShareOn = !!isScreenSharing;
 
   const handleScreenShare = async () => {
     try {
@@ -60,11 +49,8 @@ export const BottomBar = ({ startTime, onEndCall }) => {
         await disableScreenShare();
         return;
       }
-      if (Platform.OS === "ios") {
-        VideosdkRPK.startBroadcast();
-      } else {
-        await enableScreenShare();
-      }
+      // iOS shows the broadcast picker, Android asks for screen-capture consent
+      await enableScreenShare(await createScreenShareVideoTrack());
     } catch (e) {
       console.warn("screen share failed", e);
     }
@@ -88,9 +74,9 @@ export const BottomBar = ({ startTime, onEndCall }) => {
       return;
     }
     try {
-      await toggleWebcam();
+      await toggleCam();
     } catch (e) {
-      console.warn("toggleWebcam failed", e);
+      console.warn("toggleCam failed", e);
     }
   };
 

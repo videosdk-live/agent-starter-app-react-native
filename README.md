@@ -15,7 +15,8 @@ A React Native starter template for building real-time conversational AI agents 
 Before you begin, ensure you have the following installed:
 - [Node.js](https://nodejs.org/) (v22.x or later)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [React Native development environment](https://reactnative.dev/docs/set-up-your-environment) (Android Studio for Android, Xcode + CocoaPods for iOS)
+- [React Native development environment](https://reactnative.dev/docs/set-up-your-environment) (Android Studio for Android, Xcode 16+ and CocoaPods for iOS)
+- A device on Android 7.1 (API 25) or later with an arm64 CPU, or iOS 18.0 or later
 
 
 ## Getting Started

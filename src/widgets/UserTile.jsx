@@ -23,7 +23,7 @@ export const UserTile = ({
         <RTCView
           streamURL={new MediaStream([webcamStream.track]).toURL()}
           objectFit="cover"
-          mirror
+          setMirror
           style={[styles.video, { borderRadius }]}
         />
       ) : (
