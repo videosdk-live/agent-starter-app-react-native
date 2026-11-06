@@ -80,6 +80,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
   const [selectedSpeaker, setSelectedSpeaker] = useState(null);
   const [isSwapped, setIsSwapped] = useState(false);
   const facingModeRef = useRef("front");
+  const isLeavingRef = useRef(false);
 
   const {
     join,
@@ -89,7 +90,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     changeCam,
     disableScreenShare,
     isScreenSharing,
-    setAudioDevice,
+    changeMic,
   } = useRoom({
     onRoomJoined: () => {
       setAgentState("connected");
@@ -104,6 +105,14 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
       if (p?.isAgent) onAgentLeft?.();
     },
     onError: (err) => {
+      const afterOwnLeave =
+        isLeavingRef.current &&
+        (String(err?.code) === "3035" ||
+          err?.name === "ERROR_ACTION_PERFORMED_BEFORE_ROOM_JOINED");
+      if (afterOwnLeave) {
+        console.warn("ignored error after leave", err);
+        return;
+      }
       const name = err?.code ?? "Error";
       const message = err?.message ?? "Something went wrong";
       Alert.alert(String(name), String(message));
@@ -178,6 +187,7 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     if (participants.size > 2) {
       (async () => {
         try {
+          isLeavingRef.current = true;
           await leave();
         } catch (e) {
           console.warn("leave failed", e);
@@ -202,20 +212,21 @@ export const MeetingScreen = ({ onLeave, onAgentLeft, onCapacityReached }) => {
     setSpeakerSheetOpen(true);
   };
 
+  // Switches the call's microphone/audio input to the picked device.
   const handleSelectSpeaker = async (deviceId) => {
     const previous = selectedSpeaker;
     setSelectedSpeaker(deviceId);
     try {
-      // setAudioDevice takes the device from getMics()
-      const device = speakers.find((speaker) => speaker.deviceId === deviceId);
-      await setAudioDevice(device ?? deviceId);
+      await changeMic(deviceId);
     } catch (e) {
       setSelectedSpeaker(previous);
-      console.warn("setAudioDevice failed", e);
+      console.warn("changeMic failed", e);
     }
   };
 
+  // Ends the call and mutes the expected unsubscribe error that follows our own leave.
   const handleEndCall = async () => {
+    isLeavingRef.current = true;
     try {
       await leave();
     } catch (e) {

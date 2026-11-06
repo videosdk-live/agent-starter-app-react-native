@@ -8,7 +8,7 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "@videosdk.live/react-native-sdk": "2.0.0",
+    "@videosdk.live/react-native-sdk": "2.0.3",
     "clsx": "^2.1.1",
     "lucide-react-native": "^1.57.0",
     "nativewind": "^4.2.7",
